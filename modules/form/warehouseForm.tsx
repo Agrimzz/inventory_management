@@ -58,12 +58,12 @@ export default function WarehouseForm() {
     },
   });
 
-  const warehouseImages = watch("images");
+  const warehouseImages = watch("images") || [];
 
   const handleImagePick = async () => {
     const newImages = await pickImages();
     if (newImages.length > 0) {
-      setValue("images", newImages);
+      setValue("images", [...warehouseImages, ...newImages]);
     }
   };
 
@@ -222,6 +222,7 @@ export default function WarehouseForm() {
                     placeholder={ph}
                     value={value}
                     handleChangeText={onChange}
+                    isNumeric={key === "postal_code" ? true : false}
                     error={errors[key as keyof WarehouseSchema]?.message}
                   />
                 </>
@@ -251,6 +252,7 @@ export default function WarehouseForm() {
                     value={value}
                     handleChangeText={onChange}
                     error={errors[key as keyof WarehouseSchema]?.message}
+                    isNumeric={key === "email" ? false : true}
                   />
                 </>
               )}
@@ -290,6 +292,7 @@ export default function WarehouseForm() {
                     handleChangeText={(text: string) =>
                       onChange(Number(text) || 0)
                     }
+                    isNumeric
                     error={errors[key as keyof WarehouseSchema]?.message}
                   />
                 </>

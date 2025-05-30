@@ -1,11 +1,500 @@
-import React from "react";
-import { Text, View } from "react-native";
+import CreateBatch from "@/components/form/CreateBatch";
+import FormField from "@/components/form/FormField";
+import PickerField from "@/components/form/PickerField";
+import images from "@/constants/images";
+import api from "@/services/api";
+import { getBatches } from "@/services/batches";
+import { createItem } from "@/services/items";
+import { pickImages } from "@/utils/imagePicker";
+import { BatchWithIdSchema } from "@/validation/batchSchema";
+import { ItemSchema, itemSchema } from "@/validation/itemSchema";
+import { WarehouseWithIdSchema } from "@/validation/warehouseSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useFocusEffect } from "expo-router";
+import { Ellipsis } from "lucide-react-native";
+import React, { useCallback, useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import {
+  Alert,
+  Image,
+  Pressable,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { FlatList, ScrollView, Switch } from "react-native-gesture-handler";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+const existingBatches = [
+  {
+    id: 1,
+    name: "Batch A",
+  },
+  {
+    id: 2,
+    name: "Batch B",
+  },
+  {
+    id: 3,
+    name: "Batch C",
+  },
+];
+const TABS = ["Batch", "Warehouse", "Items"];
 
 const ItemForm = () => {
+  const [activeTab, setActiveTab] = useState("Batch");
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
+  const [batches, setBatches] = useState<BatchWithIdSchema[]>([]);
+  const [warehouses, setWarehouses] = useState<WarehouseWithIdSchema[]>([]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchWarehouses();
+      fetchBatches();
+    }, [])
+  );
+
+  const fetchWarehouses = async () => {
+    const res = await api.get("/warehouses/");
+    setWarehouses(res.data.results);
+  };
+
+  const fetchBatches = async () => {
+    const res = await getBatches();
+    setBatches(res.results);
+  };
+  const {
+    control,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<ItemSchema>({
+    resolver: zodResolver(itemSchema),
+    defaultValues: {
+      images: [],
+      warehouse_id: "",
+      batch_id: "",
+      quantity: "",
+      availability: true,
+      product: {
+        sku: "",
+        name: "",
+        description: "",
+        category_id: 0,
+        category: {
+          name: "",
+          description: "",
+          icon_url: "",
+        },
+        unit_id: 0,
+        unit: {
+          symbol: "",
+          name: "",
+        },
+        product_condition: "Brand New",
+        product_attributes: [],
+      },
+    },
+  });
+
+  useEffect(() => {
+    if (Object.keys(errors).length > 0) {
+      if (errors.batch_id) setActiveTab("Batch");
+      else if (errors.warehouse_id) setActiveTab("Warehouse");
+      else setActiveTab("Items");
+    }
+  }, [errors]);
+
+  const itemImages = watch("images") || [];
+
+  const handleImagePick = async () => {
+    const newImages = await pickImages();
+    if (newImages.length > 0) {
+      setValue("images", [...itemImages, ...newImages]);
+    }
+  };
+
+  const onSubmit = async (data: ItemSchema) => {
+    //  setLoading(true);
+    const formData = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+      if (key === "images" && Array.isArray(value)) {
+        value.forEach((img, idx) => {
+          formData.append("images", {
+            uri: img.uri,
+            name: `image_${idx}.jpg`,
+            type: "image/jpeg",
+          } as any);
+        });
+      } else {
+        if (typeof value === "object") {
+          formData.append(key, JSON.stringify(value));
+        } else {
+          formData.append(key, String(value));
+        }
+      }
+    });
+
+    try {
+      const created = await createItem(formData);
+      Alert.alert("Success", `Item "${created.data.product.name}" created!`);
+      reset();
+    } catch (err: any) {
+      console.error(err.response.data);
+      Alert.alert(
+        "Error",
+        err.response?.data?.message || err.message || "Could not save item"
+      );
+    } finally {
+      //  setLoading(false);
+    }
+  };
+
   return (
-    <View>
-      <Text>ItemForm</Text>
-    </View>
+    <SafeAreaView className="bg-background h-full">
+      {/* Header */}
+      <View className="w-full flex-row items-center justify-between p-4">
+        <Image source={images.logo1} className="w-14 h-14 rounded-full" />
+        <Text className="text-sm font-plight text-white">Add Items</Text>
+        <View className="w-14 h-14 bg-gray rounded-2xl items-center justify-center">
+          <Ellipsis size={16} color="#F1F1F1" />
+        </View>
+      </View>
+
+      {/* Tabs */}
+      <View className="px-4">
+        <View className="flex-row items-center justify-between bg-white/10 rounded-2xl">
+          {TABS.map((tab) => (
+            <TouchableOpacity
+              key={tab}
+              onPress={() => setActiveTab(tab)}
+              className={`${
+                activeTab === tab ? "border-primary bg-primary" : "border-gray"
+              } p-3 flex-1 rounded-2xl items-center justify-center`}
+            >
+              <Text className="text-sm font-pmedium text-white">{tab}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {/* Content */}
+      <ScrollView
+        className="flex-1 mt-4 px-4"
+        keyboardShouldPersistTaps="handled"
+      >
+        {activeTab === "Batch" && (
+          <View>
+            {isCreatingNew ? (
+              <CreateBatch
+                onBatchCreated={(newBatch: BatchWithIdSchema) => {
+                  fetchBatches();
+                  setValue("batch_id", newBatch.id.toString());
+                  setIsCreatingNew(false);
+                }}
+              />
+            ) : (
+              <View className="mb-4">
+                <Text className="text-white text-lg font-pmedium mb-2">
+                  Choose a Batch
+                </Text>
+                <Controller
+                  control={control}
+                  name="batch_id"
+                  render={({ field: { value, onChange } }) => (
+                    <PickerField
+                      title="Select Batch"
+                      value={value}
+                      placeholder="Select Batch"
+                      options={batches?.map((batch) => ({
+                        label: batch.batch_name,
+                        value: batch.id.toString(),
+                      }))}
+                      onSelect={onChange}
+                    />
+                  )}
+                />
+
+                <TouchableOpacity
+                  onPress={() => {
+                    setValue("batch_id", "");
+                    setIsCreatingNew(!isCreatingNew);
+                  }}
+                  className="p-3 rounded-xl bg-green-700 mt-2"
+                >
+                  <Text className="text-white text-center">
+                    + Create New Batch
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Validation Error (in case user selects nothing) */}
+            {!watch("batch_id") && errors.batch_id?.message && (
+              <Text className="text-red-500 text-sm mt-2">
+                {errors.batch_id.message}
+              </Text>
+            )}
+          </View>
+        )}
+
+        {activeTab === "Warehouse" && (
+          <>
+            <Text className="text-lg font-pmedium text-white">
+              Choose a Warehouse
+            </Text>
+
+            <View className="flex-col mt-16">
+              {warehouses.map((warehouse) => {
+                const selectedWarehouse = watch("warehouse_id");
+                const selected = selectedWarehouse === warehouse.id.toString();
+
+                return (
+                  <Pressable
+                    key={warehouse.id}
+                    onPress={() => {
+                      setValue("warehouse_id", warehouse.id.toString());
+                    }}
+                    className={`p-6 rounded-2xl border-2  -mt-12  border-lightgray
+                        ${
+                          selected
+                            ? "bg-primary h-[175px] "
+                            : "bg-gray h-[150px]"
+                        }
+                    `}
+                  >
+                    <Text className="text-sm font-plight text-white/80">
+                      {warehouse.address_line1}, {warehouse.city}
+                    </Text>
+                    <Text className="text-4xl font-plight text-white mt-2">
+                      {warehouse.name}
+                    </Text>
+                    {selected && (
+                      <View className="flex flex-col gap-1 mt-4">
+                        <Text className="text-xs font-plight text-white">
+                          {warehouse.phone}
+                        </Text>
+                        <Text className="text-xs font-plight text-white">
+                          {warehouse.email}
+                        </Text>
+                      </View>
+                    )}
+                  </Pressable>
+                );
+              })}
+            </View>
+          </>
+        )}
+
+        {activeTab === "Items" && (
+          <>
+            {/* Image Picker */}
+            <View className="flex flex-col gap-2 mt-4">
+              <Text className="text-lg font-psemibold text-white">
+                Item Image
+              </Text>
+              <TouchableOpacity
+                onPress={handleImagePick}
+                className="bg-gray p-4 rounded-2xl items-center"
+              >
+                <Text className="text-white font-pregular">Select Images</Text>
+              </TouchableOpacity>
+              {itemImages && itemImages.length > 0 && (
+                <FlatList
+                  data={itemImages}
+                  horizontal
+                  keyExtractor={(item, index) => String(index)}
+                  renderItem={({ item }) => (
+                    <Image
+                      source={{ uri: item.uri }}
+                      className="w-24 h-24 mr-2 rounded"
+                    />
+                  )}
+                  className="mt-2"
+                />
+              )}
+            </View>
+            <View className="flex flex-col gap-2 mt-4">
+              <Text className="text-lg font-psemibold text-white">
+                Product Details
+              </Text>
+
+              <Controller
+                control={control}
+                name="product.sku"
+                render={({ field: { value, onChange } }) => (
+                  <FormField
+                    title="SKU"
+                    placeholder="Stock Keeping Unit"
+                    value={value}
+                    handleChangeText={onChange}
+                    error={errors.product?.sku?.message}
+                  />
+                )}
+              />
+
+              <Controller
+                control={control}
+                name="product.name"
+                render={({ field: { value, onChange } }) => (
+                  <FormField
+                    title="Name"
+                    placeholder="Product name"
+                    value={value}
+                    handleChangeText={onChange}
+                    error={errors.product?.name?.message}
+                  />
+                )}
+              />
+
+              <Controller
+                control={control}
+                name="product.description"
+                render={({ field: { value, onChange } }) => (
+                  <FormField
+                    title="Description"
+                    placeholder="Product description"
+                    value={value}
+                    handleChangeText={onChange}
+                    error={errors.product?.description?.message}
+                  />
+                )}
+              />
+
+              <Controller
+                control={control}
+                name="product.product_condition"
+                render={({ field: { value, onChange } }) => (
+                  <PickerField
+                    title="Product Condition"
+                    value={value}
+                    placeholder="Brand New"
+                    options={[
+                      { label: "Brand New", value: "Brand New" },
+                      { label: "Used", value: "Used" },
+                      { label: "Refurbished", value: "Refurbished" },
+                    ]}
+                    onSelect={onChange}
+                  />
+                )}
+              />
+
+              <Text className="text-lg font-psemibold text-white mt-4">
+                Category Information
+              </Text>
+
+              <Controller
+                control={control}
+                name="product.category.name"
+                render={({ field: { value, onChange } }) => (
+                  <FormField
+                    title="Category Name"
+                    placeholder="e.g. Electronics"
+                    value={value}
+                    handleChangeText={onChange}
+                    error={errors.product?.category?.name?.message}
+                  />
+                )}
+              />
+
+              <Controller
+                control={control}
+                name="product.category.description"
+                render={({ field: { value, onChange } }) => (
+                  <FormField
+                    title="Category Description"
+                    placeholder="Optional description"
+                    value={value}
+                    handleChangeText={onChange}
+                    error={errors.product?.category?.description?.message}
+                  />
+                )}
+              />
+
+              <Text className="text-lg font-psemibold text-white mt-4">
+                Unit Info
+              </Text>
+
+              <Controller
+                control={control}
+                name="quantity"
+                render={({ field: { value, onChange } }) => (
+                  <FormField
+                    title="Quantity"
+                    placeholder="e.g. 1"
+                    value={value}
+                    isNumeric
+                    handleChangeText={onChange}
+                    error={errors.quantity?.message}
+                  />
+                )}
+              />
+              <Controller
+                control={control}
+                name="product.unit.symbol"
+                render={({ field: { value, onChange } }) => (
+                  <FormField
+                    title="Unit Symbol"
+                    placeholder="e.g. kg, pcs"
+                    value={value}
+                    handleChangeText={onChange}
+                    error={errors.product?.unit?.symbol?.message}
+                  />
+                )}
+              />
+
+              <Controller
+                control={control}
+                name="product.unit.name"
+                render={({ field: { value, onChange } }) => (
+                  <FormField
+                    title="Unit Name"
+                    placeholder="e.g. Kilogram"
+                    value={value}
+                    handleChangeText={onChange}
+                    error={errors.product?.unit?.name?.message}
+                  />
+                )}
+              />
+            </View>
+            <View className="flex-row items-center justify-between bg-gray p-4 rounded-2xl mt-4">
+              <Text className="text-white font-pregular">Availability</Text>
+              <Controller
+                control={control}
+                name="availability"
+                render={({ field: { value, onChange } }) => (
+                  <Switch
+                    value={value}
+                    onValueChange={onChange}
+                    trackColor={{ false: "#555", true: "#0f0" }}
+                    thumbColor={value ? "#fff" : "#aaa"}
+                  />
+                )}
+              />
+            </View>
+
+            <TouchableOpacity
+              // onPress={handleAddItem}
+              className="mt-4 bg-primary rounded-xl py-3 items-center"
+            >
+              <Text className="text-white font-pmedium">Add Item</Text>
+            </TouchableOpacity>
+          </>
+        )}
+      </ScrollView>
+
+      {/* Submit */}
+      <View className="p-4">
+        <TouchableOpacity
+          onPress={handleSubmit(onSubmit)}
+          className="bg-green-600 py-4 rounded-2xl items-center"
+        >
+          <Text className="text-white font-pbold text-base">Submit Form</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 };
 

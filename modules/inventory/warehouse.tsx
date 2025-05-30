@@ -5,7 +5,7 @@ import { useFetch } from "@/hooks/useFetch";
 import { WarehouseWithIdSchema } from "@/validation/warehouseSchema";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { Text, View } from "react-native";
 
 export default function WarehouseModule() {
   const { data, loading, error, refetch } =
@@ -39,7 +39,12 @@ export default function WarehouseModule() {
   });
 
   const renderContent = () => {
-    if (loading) return <ActivityIndicator size="large" className="mt-10" />;
+    if (loading)
+      return (
+        <Text className="text-center mt-10 text-white animate-bounce">
+          Loading...
+        </Text>
+      );
     if (error)
       return (
         <Text className="text-red-500 text-center mt-10">Error: {error}</Text>

@@ -1,6 +1,6 @@
 import AddButton from "@/components/AddButton";
-import { items } from "@/constants/items";
-import { router } from "expo-router";
+import { useFetch } from "@/hooks/useFetch";
+import { router, useFocusEffect } from "expo-router";
 import {
   Calendar,
   ChevronDown,
@@ -9,12 +9,31 @@ import {
   Truck,
   Warehouse,
 } from "lucide-react-native";
-import React from "react";
+import React, { useCallback } from "react";
 import { FlatList, Image, ScrollView, Text, View } from "react-native";
 
 const ItemsModule = () => {
+  const { data, loading, error, refetch } = useFetch<any[]>("/inventory/");
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch])
+  );
+
+  if (loading)
+    return (
+      <Text className="text-center mt-10 text-white animate-bounce">
+        Loading...
+      </Text>
+    );
+  if (error)
+    return (
+      <Text className="text-red-500 text-center mt-10">Error: {error}</Text>
+    );
+
   return (
-    <View className="relative">
+    <View className="relative flex-1">
       <View style={{ marginTop: 48 }}>
         <View className="">
           {/* Filter Heading */}
@@ -71,27 +90,27 @@ const ItemsModule = () => {
         </View>
       </View>
       <FlatList
-        data={items}
+        data={data}
         className="px-4 mt-4"
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <View className="flex flex-row items-stretch justify-between p-4 bg-white/10 rounded-2xl mb-2">
             <View className="flex-1 flex flex-row gap-4 items-stretch">
               <Image
-                source={{ uri: item.image }}
+                source={{ uri: item.product.images[0]?.upload || "" }}
                 className="w-24 h-24 rounded-2xl"
               />
               <View className="flex flex-col justify-between">
                 <View className="flex flex-col">
                   <Text className="text-xl font-pmedium text-white">
-                    {item.name}
+                    {item.product.name}
                   </Text>
                   <Text className="text-xs font-pmedium text-lightgray">
-                    Qty: {item.quantity}
+                    Qty: {item.quantity} {item.product.unit.symbol}
                   </Text>
                 </View>
                 <Text className="text-xs font-pmedium text-white">
-                  {item.sku}
+                  {item.product.sku}
                 </Text>
               </View>
             </View>

@@ -57,12 +57,12 @@ export default function SupplierForm() {
     },
   });
 
-  const supplierImages = watch("images");
+  const supplierImages = watch("images") || [];
 
   const handleImagePick = async () => {
     const newImages = await pickImages();
     if (newImages.length > 0) {
-      setValue("images", newImages);
+      setValue("images", [...supplierImages, ...newImages]);
     }
   };
   const onSubmit = async (data: SupplierSchema) => {
@@ -76,12 +76,14 @@ export default function SupplierForm() {
             uri: img.uri,
             name: `image_${idx}.jpg`,
             type: "image/jpeg",
-          } as any);
+          } as unknown as Blob); // Use Blob for proper typing
         });
       } else {
-        formData.append(key, String(value));
+        const isObject = typeof value === "object" && value !== null;
+        formData.append(key, isObject ? JSON.stringify(value) : String(value));
       }
     });
+
     try {
       const created = await createSupplier(formData);
       Alert.alert("Success", `Supplier "${created.name}" created!`);
@@ -119,7 +121,7 @@ export default function SupplierForm() {
         {/* Image Picker */}
         <View className="flex flex-col gap-2 mt-4">
           <Text className="text-lg font-psemibold text-white">
-            Warehouse Image
+            Supplier Image
           </Text>
           <TouchableOpacity
             onPress={handleImagePick}
@@ -211,6 +213,7 @@ export default function SupplierForm() {
                     placeholder={ph}
                     value={value}
                     handleChangeText={onChange}
+                    isNumeric={key === "email" ? false : true}
                     error={errors[key as keyof SupplierSchema]?.message}
                   />
                 </>
@@ -257,6 +260,7 @@ export default function SupplierForm() {
                 placeholder="Suppliers Contract Number"
                 value={value}
                 handleChangeText={onChange}
+                isNumeric
                 error={errors.contract_number?.message}
               />
             )}
@@ -304,6 +308,7 @@ export default function SupplierForm() {
                   placeholder={ph}
                   value={value}
                   handleChangeText={onChange}
+                  isNumeric={key === "postal_code" ? true : false}
                   error={errors[key as keyof SupplierSchema]?.message}
                 />
               )}

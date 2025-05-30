@@ -12,6 +12,7 @@ interface FormFieldProps extends TextInputProps {
   title: string;
   value: string | undefined;
   placeholder?: string;
+  isNumeric?: boolean;
   handleChangeText: (text: string) => void;
   otherStyles?: string;
   error?: string;
@@ -21,6 +22,7 @@ const FormField: React.FC<FormFieldProps> = ({
   title,
   value,
   placeholder,
+  isNumeric = false,
   handleChangeText,
   otherStyles = "",
   error,
@@ -33,7 +35,7 @@ const FormField: React.FC<FormFieldProps> = ({
     <View className={`w-full space-y-1 bg-gray p-4 rounded-2xl ${otherStyles}`}>
       <Text className="text-lightgray font-pregular">{title}</Text>
 
-      <View className="flex flex-row items-center justify-between border-b border-white/30">
+      <View className="flex flex-row items-center justify-between">
         <TextInput
           className="placeholder:text-white/70 text-white p-0 font-pregular flex-1 py-2"
           placeholder={placeholder}
@@ -41,6 +43,7 @@ const FormField: React.FC<FormFieldProps> = ({
           onChangeText={handleChangeText}
           placeholderTextColor="#ccc"
           secureTextEntry={isPasswordField && !showPassword}
+          keyboardType={isNumeric ? "numeric" : "default"}
           {...props}
         />
 

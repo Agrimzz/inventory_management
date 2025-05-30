@@ -2,7 +2,7 @@ import api from "./api";
 
 export const createWarehouse = async (formData: FormData) => {
   try {
-    const res = await fetch(`http://192.168.101.10:8000/api/ims/warehouses/`, {
+    const res = await fetch(`http://192.168.101.6:8000/api/ims/warehouses/`, {
       method: "POST",
       body: formData,
     });

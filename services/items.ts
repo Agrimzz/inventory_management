@@ -1,8 +1,8 @@
 import api from "./api";
 
-export const createSupplier = async (formData: FormData) => {
+export const createItem = async (formData: FormData) => {
   try {
-    const res = await fetch(`http://192.168.101.6:8000/api/ims/suppliers/`, {
+    const res = await fetch(`http://192.168.101.6:8000/api/ims/inventory/`, {
       method: "POST",
       body: formData,
     });
@@ -11,7 +11,7 @@ export const createSupplier = async (formData: FormData) => {
       const errorText = await res.text();
       console.error("Server responded with error:", res.status);
       console.error("Error response body:", errorText);
-      throw new Error(`Failed to create supplier. Status: ${res.status}`);
+      throw new Error(`Failed to create item. Status: ${res.status}`);
     }
 
     const data = await res.json();
@@ -22,7 +22,7 @@ export const createSupplier = async (formData: FormData) => {
   }
 };
 
-export const getsuppliers = async () => {
-  const res = await api.get("/suppliers/");
+export const getItems = async () => {
+  const res = await api.get("/items/");
   return res.data;
 };
