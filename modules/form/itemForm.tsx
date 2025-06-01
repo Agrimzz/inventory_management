@@ -1,4 +1,6 @@
 import CreateBatch from "@/components/form/CreateBatch";
+import CreateCategoryModal from "@/components/form/CreateCategoryModal";
+import CreateUnitModal from "@/components/form/CreateUnitModal";
 import FormField from "@/components/form/FormField";
 import PickerField from "@/components/form/PickerField";
 import images from "@/constants/images";
@@ -17,7 +19,7 @@ import {
 import { UnitWithId } from "@/validation/unitSchema";
 import { WarehouseWithIdSchema } from "@/validation/warehouseSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useFocusEffect } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { Ellipsis } from "lucide-react-native";
 import React, { useCallback, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -40,8 +42,12 @@ const ItemForm = ({ item }: { item?: ItemDetailSchema | null }) => {
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [batches, setBatches] = useState<BatchWithIdSchema[]>([]);
   const [warehouses, setWarehouses] = useState<WarehouseWithIdSchema[]>([]);
-  const { data: category } = useFetch<CategoryWithId[]>("/categories/");
-  const { data: unit } = useFetch<UnitWithId[]>("/units/");
+  const { data: category, refetch: refetchCategories } =
+    useFetch<CategoryWithId[]>("/categories/");
+  const { data: unit, refetch: refetchUnits } =
+    useFetch<UnitWithId[]>("/units/");
+  const [categoryModalVisible, setCategoryModalVisible] = useState(false);
+  const [unitModalVisible, setUnitModalVisible] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -163,6 +169,12 @@ const ItemForm = ({ item }: { item?: ItemDetailSchema | null }) => {
         "Success",
         `${item ? "Updated" : "Created"} "${result.name}"`
       );
+
+      if (item) {
+        router.push(`/inventory/item/${item.id}` as any);
+      } else {
+        router.back();
+      }
       reset();
     } catch (err: any) {
       console.error(err.response.data);
@@ -404,9 +416,19 @@ const ItemForm = ({ item }: { item?: ItemDetailSchema | null }) => {
                 )}
               />
 
-              <Text className="text-lg font-psemibold text-white mt-4">
-                Category Information
-              </Text>
+              <View className="flex flex-row items-center justify-between w-full mt-4">
+                <Text className="text-lg font-psemibold text-white">
+                  Category Information
+                </Text>
+                <TouchableOpacity
+                  className="py-2"
+                  onPress={() => setCategoryModalVisible(true)}
+                >
+                  <Text className="text-primary font-pregular">
+                    + Add Category
+                  </Text>
+                </TouchableOpacity>
+              </View>
 
               <Controller
                 control={control}
@@ -427,9 +449,17 @@ const ItemForm = ({ item }: { item?: ItemDetailSchema | null }) => {
                 )}
               />
 
-              <Text className="text-lg font-psemibold text-white mt-4">
-                Unit Info
-              </Text>
+              <View className="flex flex-row items-center justify-between w-full mt-4">
+                <Text className="text-lg font-psemibold text-white">
+                  Unit Information
+                </Text>
+                <TouchableOpacity
+                  className="py-2"
+                  onPress={() => setUnitModalVisible(true)}
+                >
+                  <Text className="text-primary font-pregular">+ Add Unit</Text>
+                </TouchableOpacity>
+              </View>
 
               <Controller
                 control={control}
@@ -511,6 +541,28 @@ const ItemForm = ({ item }: { item?: ItemDetailSchema | null }) => {
           <Text className="text-white font-pbold text-base">Submit Form</Text>
         </TouchableOpacity>
       </View>
+
+      {categoryModalVisible && (
+        <CreateCategoryModal
+          visible={categoryModalVisible}
+          setVisible={setCategoryModalVisible}
+          onCategoryCreated={(newCategory) => {
+            refetchCategories();
+            setValue("product.category_id", newCategory.id.toString());
+          }}
+        />
+      )}
+
+      {unitModalVisible && (
+        <CreateUnitModal
+          visible={unitModalVisible}
+          setVisible={setUnitModalVisible}
+          onUnitCreated={(newUnit) => {
+            refetchUnits();
+            setValue("product.unit_id", newUnit.id.toString());
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 };

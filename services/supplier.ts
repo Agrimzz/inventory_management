@@ -25,14 +25,11 @@ export const createSupplier = async (formData: FormData) => {
 };
 
 export const updateSupplier = async (id: string, formData: FormData) => {
-  console.log(id, formData);
-
-  //TO FIX: network type error
+  //TODO: Fix network type error
 
   const res = await axios
     .put(`${URL}/suppliers/${id}/`, formData)
     .then((res) => {
-      console.log("done", res);
       return res;
     })
     .catch((err) => {

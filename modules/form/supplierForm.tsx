@@ -104,7 +104,6 @@ export default function SupplierForm({
         ? await updateSupplier(supplier.id, formData)
         : await createSupplier(formData);
 
-      console.log(result);
       // Alert.alert(
       //   "Success",
       //   `${supplier ? "Updated" : "Created"} "${result.name}"`

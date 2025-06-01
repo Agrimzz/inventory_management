@@ -14,6 +14,7 @@ function CarouselContainer<T>({ data, renderItem }: CarouselContainerProps<T>) {
 
   return (
     <>
+      {/* TODO: Fix writing value during component render warning  */}
       <Carousel
         ref={ref}
         autoPlay

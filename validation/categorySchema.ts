@@ -3,7 +3,6 @@ import { z } from "zod";
 export const categorySchema = z.object({
   name: z.string(),
   description: z.string().nullable().optional(),
-  icon_url: z.string().nullable().optional(),
 });
 
 export const categoryWithIdSchema = categorySchema.extend({

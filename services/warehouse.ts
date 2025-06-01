@@ -35,7 +35,6 @@ export const updateWarehouse = async (id: string, formData: FormData) => {
     body: formData,
   })
     .then((res) => {
-      console.log("done", res);
       return res;
     })
     .catch((err) => {

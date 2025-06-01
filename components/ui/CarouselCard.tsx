@@ -20,7 +20,7 @@ export const CarouselCard: React.FC<CarouselCardProps> = ({ item, type }) => {
   return (
     <Animated.View
       entering={FadeInDown.duration(300)}
-      className="flex-1 items-center justify-center w-full p-6"
+      className="flex-1 items-center justify-center w-full p-4"
     >
       <Pressable
         className="flex-1 items-center justify-center w-full "
