@@ -41,7 +41,7 @@ const PickerField: React.FC<PickerFieldProps> = ({
     <View className={`w-full space-y-1 bg-gray p-4 rounded-2xl ${otherStyles}`}>
       <Text className="text-lightgray font-pregular">{title}</Text>
 
-      <TouchableOpacity className=" py-2" onPress={() => setModalVisible(true)}>
+      <TouchableOpacity className="py-2" onPress={() => setModalVisible(true)}>
         <Text
           className={`text-white font-pregular ${!value ? "opacity-60" : ""}`}
         >
@@ -51,12 +51,12 @@ const PickerField: React.FC<PickerFieldProps> = ({
 
       {error && <Text className="text-red-500 text-sm">{error}</Text>}
 
-      <Modal visible={modalVisible} transparent animationType="fade">
+      <Modal visible={modalVisible} transparent animationType="slide">
         <Pressable
-          className="flex-1 bg-black/40 justify-center px-4"
+          className="flex-1 bg-black/40"
           onPress={() => setModalVisible(false)}
         >
-          <View className="bg-black p-4 rounded-t-2xl w-full  rounded-2xl">
+          <View className="absolute bottom-0 left-0 right-0 bg-black rounded-t-2xl p-4 max-h-[50%]">
             <Text className="text-white text-lg font-pbold mb-3">{title}</Text>
             <FlatList
               data={options}

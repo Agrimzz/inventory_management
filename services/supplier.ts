@@ -1,8 +1,10 @@
-import api from "./api";
+import axios from "axios";
+
+const URL = process.env.EXPO_PUBLIC_API_URL;
 
 export const createSupplier = async (formData: FormData) => {
   try {
-    const res = await fetch(`http://192.168.101.6:8000/api/ims/suppliers/`, {
+    const res = await fetch(`${URL}/suppliers/`, {
       method: "POST",
       body: formData,
     });
@@ -17,12 +19,39 @@ export const createSupplier = async (formData: FormData) => {
     const data = await res.json();
     return data;
   } catch (error: any) {
-    console.error("Request failed:", error.message || error);
+    console.error("Request failed:", error);
     throw error;
   }
 };
 
-export const getsuppliers = async () => {
-  const res = await api.get("/suppliers/");
-  return res.data;
+export const updateSupplier = async (id: string, formData: FormData) => {
+  console.log(id, formData);
+
+  //TO FIX: network type error
+
+  const res = await axios
+    .put(`${URL}/suppliers/${id}/`, formData)
+    .then((res) => {
+      console.log("done", res);
+      return res;
+    })
+    .catch((err) => {
+      console.log("Error", err);
+      return err;
+    });
+
+  return res;
+
+  // if (!res?.ok) {
+  //   const errorText = await res.text();
+  //   console.error("Server responded with error:", res.status);
+  //   console.error("Error response body:", errorText);
+  //   throw new Error(`Failed to update supplier. Status: ${res.status}`);
+  // }
+
+  // const text = await res.text();
+  // const data = text ? JSON.parse(text) : {};
+  // console.log("Parsed response data:", data);
+  // console.log(data);
+  // return data;
 };

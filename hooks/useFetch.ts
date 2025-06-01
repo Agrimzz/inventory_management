@@ -15,7 +15,11 @@ export const fetchAPI = async (url: string, options?: object) => {
 };
 
 // React hook using the fetchAPI helper
-export const useFetch = <T>(url: string, options?: object) => {
+export const useFetch = <T>(
+  url: string,
+  single: boolean = false,
+  options?: object
+) => {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +30,11 @@ export const useFetch = <T>(url: string, options?: object) => {
 
     try {
       const result = await fetchAPI(url, options);
-      setData(result.results);
+      if (single) {
+        setData(result);
+      } else {
+        setData(result.results);
+      }
     } catch (err) {
       setError((err as Error).message);
     } finally {

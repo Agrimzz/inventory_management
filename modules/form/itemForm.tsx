@@ -2,12 +2,19 @@ import CreateBatch from "@/components/form/CreateBatch";
 import FormField from "@/components/form/FormField";
 import PickerField from "@/components/form/PickerField";
 import images from "@/constants/images";
+import { useFetch } from "@/hooks/useFetch";
 import api from "@/services/api";
 import { getBatches } from "@/services/batches";
-import { createItem } from "@/services/items";
+import { createItem, updateItem } from "@/services/items";
 import { pickImages } from "@/utils/imagePicker";
 import { BatchWithIdSchema } from "@/validation/batchSchema";
-import { ItemSchema, itemSchema } from "@/validation/itemSchema";
+import { CategoryWithId } from "@/validation/categorySchema";
+import {
+  ItemDetailSchema,
+  ItemSchema,
+  itemSchema,
+} from "@/validation/itemSchema";
+import { UnitWithId } from "@/validation/unitSchema";
 import { WarehouseWithIdSchema } from "@/validation/warehouseSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFocusEffect } from "expo-router";
@@ -25,27 +32,16 @@ import {
 import { FlatList, ScrollView, Switch } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const existingBatches = [
-  {
-    id: 1,
-    name: "Batch A",
-  },
-  {
-    id: 2,
-    name: "Batch B",
-  },
-  {
-    id: 3,
-    name: "Batch C",
-  },
-];
 const TABS = ["Batch", "Warehouse", "Items"];
 
-const ItemForm = () => {
+const ItemForm = ({ item }: { item?: ItemDetailSchema | null }) => {
+  const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("Batch");
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [batches, setBatches] = useState<BatchWithIdSchema[]>([]);
   const [warehouses, setWarehouses] = useState<WarehouseWithIdSchema[]>([]);
+  const { data: category } = useFetch<CategoryWithId[]>("/categories/");
+  const { data: unit } = useFetch<UnitWithId[]>("/units/");
 
   useFocusEffect(
     useCallback(() => {
@@ -63,6 +59,7 @@ const ItemForm = () => {
     const res = await getBatches();
     setBatches(res.results);
   };
+
   const {
     control,
     handleSubmit,
@@ -82,13 +79,13 @@ const ItemForm = () => {
         sku: "",
         name: "",
         description: "",
-        category_id: 0,
+        category_id: "",
         category: {
           name: "",
           description: "",
           icon_url: "",
         },
-        unit_id: 0,
+        unit_id: "",
         unit: {
           symbol: "",
           name: "",
@@ -98,6 +95,27 @@ const ItemForm = () => {
       },
     },
   });
+
+  useEffect(() => {
+    if (item) {
+      reset({
+        ...item,
+        images: item.product.images,
+        product: {
+          ...item.product,
+          product_condition: item.product.product_condition as
+            | "Brand New"
+            | "Used"
+            | "Refurbished",
+          warranty_period: Number(item.product.warranty_period),
+          category_id: String(item.product.category?.id),
+          unit_id: String(item.product.unit?.id),
+        },
+        warehouse_id: String(item.warehouse.id),
+        batch_id: String(item.batch.id),
+      });
+    }
+  }, [item]);
 
   useEffect(() => {
     if (Object.keys(errors).length > 0) {
@@ -138,8 +156,13 @@ const ItemForm = () => {
     });
 
     try {
-      const created = await createItem(formData);
-      Alert.alert("Success", `Item "${created.data.product.name}" created!`);
+      const result = item
+        ? await updateItem(item.id.toString(), formData)
+        : await createItem(formData);
+      Alert.alert(
+        "Success",
+        `${item ? "Updated" : "Created"} "${result.name}"`
+      );
       reset();
     } catch (err: any) {
       console.error(err.response.data);
@@ -308,7 +331,7 @@ const ItemForm = () => {
                   keyExtractor={(item, index) => String(index)}
                   renderItem={({ item }) => (
                     <Image
-                      source={{ uri: item.uri }}
+                      source={{ uri: item.uri || item.upload }}
                       className="w-24 h-24 mr-2 rounded"
                     />
                   )}
@@ -387,28 +410,19 @@ const ItemForm = () => {
 
               <Controller
                 control={control}
-                name="product.category.name"
+                name="product.category_id"
                 render={({ field: { value, onChange } }) => (
-                  <FormField
-                    title="Category Name"
-                    placeholder="e.g. Electronics"
-                    value={value}
-                    handleChangeText={onChange}
-                    error={errors.product?.category?.name?.message}
-                  />
-                )}
-              />
-
-              <Controller
-                control={control}
-                name="product.category.description"
-                render={({ field: { value, onChange } }) => (
-                  <FormField
-                    title="Category Description"
-                    placeholder="Optional description"
-                    value={value}
-                    handleChangeText={onChange}
-                    error={errors.product?.category?.description?.message}
+                  <PickerField
+                    title="Category"
+                    value={value?.toString()}
+                    placeholder="Select Category"
+                    options={
+                      category?.map((category) => ({
+                        label: category.name,
+                        value: category.id.toString(),
+                      })) || []
+                    }
+                    onSelect={onChange}
                   />
                 )}
               />
@@ -431,30 +445,22 @@ const ItemForm = () => {
                   />
                 )}
               />
-              <Controller
-                control={control}
-                name="product.unit.symbol"
-                render={({ field: { value, onChange } }) => (
-                  <FormField
-                    title="Unit Symbol"
-                    placeholder="e.g. kg, pcs"
-                    value={value}
-                    handleChangeText={onChange}
-                    error={errors.product?.unit?.symbol?.message}
-                  />
-                )}
-              />
 
               <Controller
                 control={control}
-                name="product.unit.name"
+                name="product.unit_id"
                 render={({ field: { value, onChange } }) => (
-                  <FormField
-                    title="Unit Name"
-                    placeholder="e.g. Kilogram"
-                    value={value}
-                    handleChangeText={onChange}
-                    error={errors.product?.unit?.name?.message}
+                  <PickerField
+                    title="Unit"
+                    value={value?.toString()}
+                    placeholder="Select Unit"
+                    options={
+                      unit?.map((unit) => ({
+                        label: unit.name,
+                        value: unit.id.toString(),
+                      })) || []
+                    }
+                    onSelect={onChange}
                   />
                 )}
               />
@@ -474,6 +480,17 @@ const ItemForm = () => {
                 )}
               />
             </View>
+            {errors.product && (
+              <View className="mt-2">
+                {Object.entries(errors.product).map(([key, err]: any) =>
+                  typeof err?.message === "string" ? (
+                    <Text key={key} className="text-red-500 text-xs mt-1">
+                      {err.message}
+                    </Text>
+                  ) : null
+                )}
+              </View>
+            )}
 
             <TouchableOpacity
               // onPress={handleAddItem}

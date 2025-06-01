@@ -8,10 +8,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const tabs = ["dashboard", "items", "warehouse", "suppliers"] as const;
 
 const tabRoutes = {
-  dashboard: "/inventory/dashboard",
-  items: "/inventory/items",
-  warehouse: "/inventory/warehouse",
-  suppliers: "/inventory/suppliers",
+  dashboard: "/inventory/(general)/dashboard",
+  items: "/inventory/(general)/items",
+  warehouse: "/inventory/(general)/warehouse",
+  suppliers: "/inventory/(general)/suppliers",
 } as const;
 
 const InventoryLayout = () => {

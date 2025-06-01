@@ -3,7 +3,7 @@ import { z } from "zod";
 export const supplierSchema = z.object({
   images: z.array(z.record(z.any())).optional(),
   name: z.string().min(1, "Name is required"),
-  contact_name: z.string().min(1, "Contact Name is required"),
+  contact_person: z.string().min(1, "Contact Name is required"),
   contact_title: z.string().optional(),
   phone: z.string().min(1, "Phone is required"),
   alt_phone: z.string().optional(),

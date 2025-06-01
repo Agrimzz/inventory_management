@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Ellipsis } from "lucide-react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   Alert,
@@ -17,11 +17,20 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import FormField from "@/components/form/FormField";
 import images from "@/constants/images";
-import { createSupplier } from "@/services/supplier";
+import { createSupplier, updateSupplier } from "@/services/supplier";
 import { pickImages } from "@/utils/imagePicker";
-import { supplierSchema, SupplierSchema } from "@/validation/supplierSchema";
+import {
+  supplierSchema,
+  SupplierSchema,
+  SupplierWithIdSchema,
+} from "@/validation/supplierSchema";
+import { router } from "expo-router";
 
-export default function SupplierForm() {
+export default function SupplierForm({
+  supplier,
+}: {
+  supplier?: SupplierWithIdSchema;
+}) {
   const [loading, setLoading] = useState(false);
 
   const {
@@ -36,7 +45,7 @@ export default function SupplierForm() {
     defaultValues: {
       images: [],
       name: "",
-      contact_name: "",
+      contact_person: "",
       contact_title: "",
       phone: "",
       alt_phone: "",
@@ -57,6 +66,12 @@ export default function SupplierForm() {
     },
   });
 
+  useEffect(() => {
+    if (supplier) {
+      reset(supplier);
+    }
+  }, [supplier]);
+
   const supplierImages = watch("images") || [];
 
   const handleImagePick = async () => {
@@ -76,7 +91,7 @@ export default function SupplierForm() {
             uri: img.uri,
             name: `image_${idx}.jpg`,
             type: "image/jpeg",
-          } as unknown as Blob); // Use Blob for proper typing
+          } as unknown as Blob);
         });
       } else {
         const isObject = typeof value === "object" && value !== null;
@@ -85,11 +100,23 @@ export default function SupplierForm() {
     });
 
     try {
-      const created = await createSupplier(formData);
-      Alert.alert("Success", `Supplier "${created.name}" created!`);
+      const result = supplier
+        ? await updateSupplier(supplier.id, formData)
+        : await createSupplier(formData);
+
+      console.log(result);
+      // Alert.alert(
+      //   "Success",
+      //   `${supplier ? "Updated" : "Created"} "${result.name}"`
+      // );
+
+      if (supplier) {
+        router.push(`/inventory/supplier/${supplier.id}` as any);
+      } else {
+        router.back();
+      }
       reset();
     } catch (err: any) {
-      console.error(err.response.data);
       Alert.alert(
         "Error",
         err.response?.data?.message || err.message || "Could not save supplier"
@@ -104,7 +131,9 @@ export default function SupplierForm() {
       {/* Header */}
       <View className="w-full flex-row items-center justify-between p-4">
         <Image source={images.logo1} className="w-14 h-14 rounded-full" />
-        <Text className="text-sm font-plight text-white">Add Supplier</Text>
+        <Text className="text-sm font-plight text-white">
+          {supplier ? "Edit Supplier" : "Add Supplier"}
+        </Text>
         <View className="w-14 h-14 bg-gray rounded-2xl items-center justify-center">
           <Ellipsis size={16} color="#F1F1F1" />
         </View>
@@ -136,7 +165,7 @@ export default function SupplierForm() {
               keyExtractor={(item, index) => String(index)}
               renderItem={({ item }) => (
                 <Image
-                  source={{ uri: item.uri }}
+                  source={{ uri: item.uri || item.upload }}
                   className="w-24 h-24 mr-2 rounded"
                 />
               )}
@@ -164,7 +193,7 @@ export default function SupplierForm() {
           />
           <Controller
             control={control}
-            name="contact_name"
+            name="contact_person"
             render={({ field: { value, onChange } }) => (
               <>
                 <FormField
@@ -172,7 +201,7 @@ export default function SupplierForm() {
                   placeholder="Primary contact"
                   value={value}
                   handleChangeText={onChange}
-                  error={errors.contact_name?.message}
+                  error={errors.contact_person?.message}
                 />
               </>
             )}

@@ -1,8 +1,9 @@
 import api from "./api";
 
+const URL = process.env.EXPO_PUBLIC_API_URL;
 export const createItem = async (formData: FormData) => {
   try {
-    const res = await fetch(`http://192.168.101.6:8000/api/ims/inventory/`, {
+    const res = await fetch(`${URL}/inventory/`, {
       method: "POST",
       body: formData,
     });
@@ -25,4 +26,21 @@ export const createItem = async (formData: FormData) => {
 export const getItems = async () => {
   const res = await api.get("/items/");
   return res.data;
+};
+
+export const updateItem = async (id: string, formData: FormData) => {
+  const res = await fetch(`${URL}/inventory/${id}/`, {
+    method: "PUT",
+    body: formData,
+  })
+    .then((res) => {
+      console.log("done", res);
+      return res;
+    })
+    .catch((err) => {
+      console.log("Error", err);
+      return err;
+    });
+
+  return res;
 };

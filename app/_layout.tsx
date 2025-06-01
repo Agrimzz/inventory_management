@@ -30,6 +30,15 @@ export default function RootLayout() {
         <Stack.Screen name="dashboard" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="inventory" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="inventory/(general)"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="inventory/(noheader)"
+          options={{ headerShown: false }}
+        />
+
         <Stack.Screen name="form" options={{ headerShown: false }} />
       </Stack>
     </GestureHandlerRootView>

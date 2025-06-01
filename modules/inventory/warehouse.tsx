@@ -59,7 +59,7 @@ export default function WarehouseModule() {
     return (
       <CarouselContainer
         data={transformedData}
-        renderItem={({ item }) => <CarouselCard item={item} />}
+        renderItem={({ item }) => <CarouselCard item={item} type="warehouse" />}
       />
     );
   };
@@ -67,7 +67,7 @@ export default function WarehouseModule() {
   return (
     <View className="flex-1 bg-background justify-end py-2">
       {renderContent()}
-      <AddButton onPress={() => router.push("/form/warehouse")} />
+      <AddButton onPress={() => router.push("/form/create/warehouse")} />
     </View>
   );
 }

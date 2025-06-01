@@ -59,7 +59,7 @@ const SupplierModule = () => {
     return (
       <CarouselContainer
         data={transformedData}
-        renderItem={({ item }) => <CarouselCard item={item} />}
+        renderItem={({ item }) => <CarouselCard item={item} type="supplier" />}
       />
     );
   };
@@ -67,7 +67,7 @@ const SupplierModule = () => {
   return (
     <View className="flex-1 bg-background justify-end py-2">
       {renderContent()}
-      <AddButton onPress={() => router.push("/form/supplier")} />
+      <AddButton onPress={() => router.push("/form/create/supplier")} />
     </View>
   );
 };

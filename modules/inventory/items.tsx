@@ -1,4 +1,5 @@
 import AddButton from "@/components/AddButton";
+import images from "@/constants/images";
 import { useFetch } from "@/hooks/useFetch";
 import { router, useFocusEffect } from "expo-router";
 import {
@@ -10,7 +11,14 @@ import {
   Warehouse,
 } from "lucide-react-native";
 import React, { useCallback } from "react";
-import { FlatList, Image, ScrollView, Text, View } from "react-native";
+import {
+  FlatList,
+  Image,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 
 const ItemsModule = () => {
   const { data, loading, error, refetch } = useFetch<any[]>("/inventory/");
@@ -94,31 +102,37 @@ const ItemsModule = () => {
         className="px-4 mt-4"
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
-          <View className="flex flex-row items-stretch justify-between p-4 bg-white/10 rounded-2xl mb-2">
-            <View className="flex-1 flex flex-row gap-4 items-stretch">
-              <Image
-                source={{ uri: item.product.images[0]?.upload || "" }}
-                className="w-24 h-24 rounded-2xl"
-              />
-              <View className="flex flex-col justify-between">
-                <View className="flex flex-col">
-                  <Text className="text-xl font-pmedium text-white">
-                    {item.product.name}
-                  </Text>
-                  <Text className="text-xs font-pmedium text-lightgray">
-                    Qty: {item.quantity} {item.product.unit.symbol}
+          <Pressable onPress={() => router.push(`/inventory/item/${item.id}`)}>
+            <View className="flex flex-row items-stretch justify-between p-4 bg-white/10 rounded-2xl mb-2">
+              <View className="flex-1 flex flex-row gap-4 items-stretch">
+                <Image
+                  source={
+                    item.product.images[0]?.upload
+                      ? { uri: item.product.images[0].upload }
+                      : images.logo1
+                  }
+                  className="w-24 h-24 rounded-2xl"
+                />
+                <View className="flex flex-col justify-between">
+                  <View className="flex flex-col">
+                    <Text className="text-xl font-pmedium text-white">
+                      {item.product.name}
+                    </Text>
+                    <Text className="text-xs font-pmedium text-lightgray">
+                      Qty: {item.quantity} {item.product.unit.symbol}
+                    </Text>
+                  </View>
+                  <Text className="text-xs font-pmedium text-white">
+                    {item.product.sku}
                   </Text>
                 </View>
-                <Text className="text-xs font-pmedium text-white">
-                  {item.product.sku}
-                </Text>
               </View>
+              <EllipsisVertical size={20} color="#F1F1F1" />
             </View>
-            <EllipsisVertical size={20} color="#F1F1F1" />
-          </View>
+          </Pressable>
         )}
       />
-      <AddButton onPress={() => router.push("/form/item")} />
+      <AddButton onPress={() => router.push("/form/create/item")} />
     </View>
   );
 };

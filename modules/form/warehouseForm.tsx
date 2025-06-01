@@ -1,11 +1,16 @@
 import FormField from "@/components/form/FormField";
 import images from "@/constants/images";
-import { createWarehouse } from "@/services/warehouse";
+import { createWarehouse, updateWarehouse } from "@/services/warehouse";
 import { pickImages } from "@/utils/imagePicker";
-import { warehouseSchema, WarehouseSchema } from "@/validation/warehouseSchema";
+import {
+  warehouseSchema,
+  WarehouseSchema,
+  WarehouseWithIdSchema,
+} from "@/validation/warehouseSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { router } from "expo-router";
 import { Ellipsis } from "lucide-react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   Alert,
@@ -19,7 +24,11 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function WarehouseForm() {
+export default function WarehouseForm({
+  warehouse,
+}: {
+  warehouse?: WarehouseWithIdSchema;
+}) {
   const [loading, setLoading] = useState(false);
   const {
     control,
@@ -58,6 +67,12 @@ export default function WarehouseForm() {
     },
   });
 
+  useEffect(() => {
+    if (warehouse) {
+      reset(warehouse);
+    }
+  }, [warehouse]);
+
   const warehouseImages = watch("images") || [];
 
   const handleImagePick = async () => {
@@ -85,8 +100,19 @@ export default function WarehouseForm() {
       }
     });
     try {
-      const created = await createWarehouse(formData);
-      Alert.alert("Success", `Warehouse "${created.name}" created!`);
+      const result = warehouse
+        ? await updateWarehouse(warehouse.id, formData)
+        : await createWarehouse(formData);
+      Alert.alert(
+        "Success",
+        `${warehouse ? "Updated" : "Created"} "${result.name}"`
+      );
+
+      if (warehouse) {
+        router.push(`/inventory/warehouse/${warehouse.id}` as any);
+      } else {
+        router.back();
+      }
       reset();
     } catch (err: any) {
       console.error(err.response.data);
