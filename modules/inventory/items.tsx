@@ -31,9 +31,12 @@ const ItemsModule = () => {
 
   if (loading)
     return (
-      <Text className="text-center mt-10 text-white animate-bounce">
-        Loading...
-      </Text>
+      <>
+        <Text className="text-center mt-10 text-white animate-bounce">
+          Loading...
+        </Text>
+        <AddButton onPress={() => router.push("/form/create/item")} />
+      </>
     );
   if (error)
     return (

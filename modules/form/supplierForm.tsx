@@ -241,7 +241,7 @@ export default function SupplierForm({
                     placeholder={ph}
                     value={value}
                     handleChangeText={onChange}
-                    isNumeric={key === "email" ? false : true}
+                    type={key === "email" ? "email" : "phone"}
                     error={errors[key as keyof SupplierSchema]?.message}
                   />
                 </>
@@ -288,7 +288,7 @@ export default function SupplierForm({
                 placeholder="Suppliers Contract Number"
                 value={value}
                 handleChangeText={onChange}
-                isNumeric
+                type="number"
                 error={errors.contract_number?.message}
               />
             )}
@@ -336,7 +336,7 @@ export default function SupplierForm({
                   placeholder={ph}
                   value={value}
                   handleChangeText={onChange}
-                  isNumeric={key === "postal_code" ? true : false}
+                  type={key === "postal_code" ? "number" : "text"}
                   error={errors[key as keyof SupplierSchema]?.message}
                 />
               )}

@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 const productAttributeSchema = z.object({
-  key: z.string().min(1),
-  value: z.string().min(1),
+  key: z.string().min(1, "Attribute key is required"),
+  value: z.string().min(1, "Attribute value is required"),
 });
 
 const productSchema = z.object({
@@ -10,19 +10,23 @@ const productSchema = z.object({
   name: z.string().min(1, { message: "Product name is required" }),
   description: z.string().optional(),
   category_id: z.string().optional(),
-  category: z.object({
-    name: z.string().min(1, { message: "Category name is required" }),
-    description: z.string().optional(),
-    icon_url: z.string().optional(),
-  }),
+  // category: z
+  //   .object({
+  //     name: z.string().min(1, { message: "Category name is required" }),
+  //     description: z.string().optional(),
+  //     icon_url: z.string().optional(),
+  //   })
+  //   .optional(),
   unit_id: z.string({ required_error: "Unit is required" }),
-  unit: z.object({
-    symbol: z
-      .string()
-      .min(1, { message: "Unit symbol is required" })
-      .optional(),
-    name: z.string().min(1, { message: "Unit name is required" }).optional(),
-  }),
+  // unit: z
+  //   .object({
+  //     symbol: z
+  //       .string()
+  //       .min(1, { message: "Unit symbol is required" })
+  //       .optional(),
+  //     name: z.string().min(1, { message: "Unit name is required" }).optional(),
+  //   })
+  //   .optional(),
   expiry_date: z.string().nullable().optional(),
   serial_number: z.string().nullable().optional(),
   product_condition: z.enum(["Brand New", "Used", "Refurbished"], {
@@ -31,7 +35,12 @@ const productSchema = z.object({
   manufacture_date: z.string().nullable().optional(),
   warranty_period: z.number().nullable().optional(),
   images: z.array(z.any()).optional(),
-  product_attributes: z.array(productAttributeSchema).optional(),
+  attributes: z
+    .array(productAttributeSchema)
+    .refine((val) => val.length === 0 || val.every((v) => v.key && v.value), {
+      message: "Attributes must have both key and value",
+    })
+    .optional(),
 });
 
 export const itemSchema = z.object({
@@ -91,7 +100,7 @@ export interface ItemDetailSchema {
     };
 
     attributes?: {
-      name: string;
+      key: string;
       value: string;
     }[];
 

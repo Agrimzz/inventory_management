@@ -10,27 +10,29 @@ export const warehouseSchema = z.object({
   address_line2: z.string().optional(),
   city: z.string().min(1, "City is required"),
   state: z.string().min(1, "State is required"),
-  postal_code: z.string().min(1, "Postal Code is required"),
+  postal_code: z
+    .string()
+    .min(1, "Postal Code is required")
+    .regex(/^\d+$/, "Postal Code must contain digits only"),
   country: z.string().min(1, "Country is required"),
 
-  phone: z.string().min(1, "Phone is required"),
-  alt_phone: z.string().optional(),
+  phone: z
+    .string()
+    .min(1, "Phone is required")
+    .regex(/^\d+$/, "Phone must contain digits only"),
+
+  alt_phone: z
+    .string()
+    .regex(/^\d+$/, "Alternate phone must contain digits only")
+    .optional()
+    .or(z.literal("")),
   email: z.string().email("Invalid email address"),
   fax: z.string().optional(),
 
-  storage_capacity: z
-    .number({ invalid_type_error: "Storage Capacity must be a number" })
-    .min(0),
-  current_storage: z
-    .number({ invalid_type_error: "Current Storage must be a number" })
-    .min(0),
-  min_threshold: z
-    .number({ invalid_type_error: "Min Threshold must be a number" })
-    .min(0),
-  max_threshold: z
-    .number({ invalid_type_error: "Max Threshold must be a number" })
-    .min(0),
-
+  storage_capacity: z.string(),
+  current_storage: z.string(),
+  min_threshold: z.string(),
+  max_threshold: z.string(),
   temperature_controlled: z.boolean(),
   hazard_compatible: z.boolean(),
   fire_safety_certified: z.boolean(),

@@ -24,12 +24,16 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import RNDateTimePicker from "@react-native-community/datetimepicker";
+
 export default function WarehouseForm({
   warehouse,
 }: {
   warehouse?: WarehouseWithIdSchema;
 }) {
   const [loading, setLoading] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
   const {
     control,
     handleSubmit,
@@ -54,10 +58,10 @@ export default function WarehouseForm({
       alt_phone: "",
       email: "",
       fax: "",
-      storage_capacity: 0,
-      current_storage: 0,
-      min_threshold: 0,
-      max_threshold: 0,
+      storage_capacity: "",
+      current_storage: "",
+      min_threshold: "",
+      max_threshold: "",
       temperature_controlled: false,
       hazard_compatible: false,
       fire_safety_certified: false,
@@ -248,7 +252,7 @@ export default function WarehouseForm({
                     placeholder={ph}
                     value={value}
                     handleChangeText={onChange}
-                    isNumeric={key === "postal_code" ? true : false}
+                    type={key === "postal_code" ? "number" : "text"}
                     error={errors[key as keyof WarehouseSchema]?.message}
                   />
                 </>
@@ -278,7 +282,7 @@ export default function WarehouseForm({
                     value={value}
                     handleChangeText={onChange}
                     error={errors[key as keyof WarehouseSchema]?.message}
-                    isNumeric={key === "email" ? false : true}
+                    type={key === "email" ? "email" : "phone"}
                   />
                 </>
               )}
@@ -315,10 +319,8 @@ export default function WarehouseForm({
                     title={label}
                     placeholder={ph}
                     value={String(value)}
-                    handleChangeText={(text: string) =>
-                      onChange(Number(text) || 0)
-                    }
-                    isNumeric
+                    handleChangeText={onChange}
+                    type="decimal"
                     error={errors[key as keyof WarehouseSchema]?.message}
                   />
                 </>
@@ -371,7 +373,7 @@ export default function WarehouseForm({
         {/* Schedule */}
         <View className="flex flex-col gap-2 mt-4">
           <Text className="text-lg font-psemibold text-white">Schedule</Text>
-          <Controller
+          {/* <Controller
             control={control}
             name="last_safety_audit"
             render={({ field: { value, onChange } }) => (
@@ -385,7 +387,55 @@ export default function WarehouseForm({
                 />
               </>
             )}
+          /> */}
+
+          <Controller
+            control={control}
+            name="last_safety_audit"
+            render={({ field: { value, onChange } }) => (
+              <>
+                <TouchableOpacity
+                  onPress={() => setShowDatePicker(true)}
+                  className="bg-gray p-4 rounded-2xl"
+                >
+                  <Text className="text-lightgray font-pregular">
+                    Last Safety Audit
+                  </Text>
+                  <Text
+                    className={`${
+                      value ? "text-white" : "text-lightgray"
+                    } font-pregular py-2`}
+                  >
+                    {value
+                      ? new Date(value).toLocaleDateString()
+                      : "Select Date"}
+                  </Text>
+                </TouchableOpacity>
+
+                {showDatePicker && (
+                  <RNDateTimePicker
+                    mode="date"
+                    value={value ? new Date(value) : new Date()}
+                    onChange={(event, selectedDate) => {
+                      setShowDatePicker(false);
+                      if (selectedDate) {
+                        onChange(selectedDate.toISOString().split("T")[0]);
+                      }
+                    }}
+                    display="default"
+                    themeVariant="dark"
+                  />
+                )}
+
+                {errors.last_safety_audit?.message && (
+                  <Text className="text-red-500 text-sm ml-2">
+                    {errors.last_safety_audit.message}
+                  </Text>
+                )}
+              </>
+            )}
           />
+
           <Controller
             control={control}
             name="operational_hours"

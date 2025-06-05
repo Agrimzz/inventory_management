@@ -22,7 +22,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { router, useFocusEffect } from "expo-router";
 import { Ellipsis } from "lucide-react-native";
 import React, { useCallback, useEffect, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useFieldArray, useForm } from "react-hook-form";
 import {
   Alert,
   Image,
@@ -86,18 +86,9 @@ const ItemForm = ({ item }: { item?: ItemDetailSchema | null }) => {
         name: "",
         description: "",
         category_id: "",
-        category: {
-          name: "",
-          description: "",
-          icon_url: "",
-        },
         unit_id: "",
-        unit: {
-          symbol: "",
-          name: "",
-        },
         product_condition: "Brand New",
-        product_attributes: [],
+        attributes: [],
       },
     },
   });
@@ -122,6 +113,11 @@ const ItemForm = ({ item }: { item?: ItemDetailSchema | null }) => {
       });
     }
   }, [item]);
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "product.attributes",
+  });
 
   useEffect(() => {
     if (Object.keys(errors).length > 0) {
@@ -469,7 +465,7 @@ const ItemForm = ({ item }: { item?: ItemDetailSchema | null }) => {
                     title="Quantity"
                     placeholder="e.g. 1"
                     value={value}
-                    isNumeric
+                    type="number"
                     handleChangeText={onChange}
                     error={errors.quantity?.message}
                   />
@@ -510,6 +506,79 @@ const ItemForm = ({ item }: { item?: ItemDetailSchema | null }) => {
                 )}
               />
             </View>
+
+            <View className="flex flex-row items-center justify-between w-full mt-4">
+              <Text className="text-lg font-psemibold text-white">
+                Product Attributes
+              </Text>
+              <TouchableOpacity
+                className="py-2"
+                onPress={() => append({ key: "", value: "" })}
+              >
+                <Text className="text-primary font-pregular">
+                  + Add Attribures
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {fields.map((field, index) => (
+              <View key={field.id} className=" mb-4">
+                <View key={field.id} className="flex-row items-center gap-2">
+                  <Controller
+                    control={control}
+                    name={`product.attributes.${index}.key`}
+                    render={({ field: { value, onChange } }) => (
+                      <FormField
+                        title="Key"
+                        placeholder="Key"
+                        value={value}
+                        handleChangeText={onChange}
+                        otherStyles="flex-1"
+                        error={
+                          errors.product?.attributes?.[index]?.key?.message
+                        }
+                      />
+                    )}
+                  />
+
+                  <Controller
+                    control={control}
+                    name={`product.attributes.${index}.value`}
+                    render={({ field: { value, onChange } }) => (
+                      <FormField
+                        title="Value"
+                        placeholder="Value"
+                        value={value}
+                        handleChangeText={onChange}
+                        otherStyles="flex-1"
+                        error={
+                          errors.product?.attributes?.[index]?.value?.message
+                        }
+                      />
+                    )}
+                  />
+                </View>
+                <TouchableOpacity
+                  onPress={() => remove(index)}
+                  className="rounded-xl"
+                >
+                  <Text className="text-red-500 font-pregular">Remove</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+            {errors.product?.attributes && (
+              <View className="mt-2">
+                {Object.entries(errors.product?.attributes).map(
+                  ([key, err]: any) =>
+                    typeof err?.message === "string" ? (
+                      <Text key={key} className="text-red-500 text-xs mt-1">
+                        {err.message}
+                      </Text>
+                    ) : null
+                )}
+              </View>
+            )}
+
             {errors.product && (
               <View className="mt-2">
                 {Object.entries(errors.product).map(([key, err]: any) =>
@@ -535,7 +604,10 @@ const ItemForm = ({ item }: { item?: ItemDetailSchema | null }) => {
       {/* Submit */}
       <View className="p-4">
         <TouchableOpacity
-          onPress={handleSubmit(onSubmit)}
+          onPress={handleSubmit(onSubmit, (formErrors) => {
+            console.log("❌ Validation Errors:", formErrors);
+            Alert.alert("Validation Failed", "Check console for details");
+          })}
           className="bg-green-600 py-4 rounded-2xl items-center"
         >
           <Text className="text-white font-pbold text-base">Submit Form</Text>

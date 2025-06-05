@@ -12,24 +12,39 @@ interface FormFieldProps extends TextInputProps {
   title: string;
   value: string | undefined;
   placeholder?: string;
-  isNumeric?: boolean;
   handleChangeText: (text: string) => void;
   otherStyles?: string;
   error?: string;
+  type?: "text" | "password" | "number" | "email" | "decimal" | "phone";
 }
 
 const FormField: React.FC<FormFieldProps> = ({
   title,
   value,
   placeholder,
-  isNumeric = false,
   handleChangeText,
+  type = "text",
   otherStyles = "",
   error,
   ...props
 }) => {
   const [showPassword, setShowPassword] = useState(false);
-  const isPasswordField = title.toLowerCase().includes("password");
+  const isPasswordField = type === "password";
+
+  const keyboardType: TextInputProps["keyboardType"] = (() => {
+    switch (type) {
+      case "email":
+        return "email-address";
+      case "number":
+        return "number-pad";
+      case "decimal":
+        return "decimal-pad";
+      case "phone":
+        return "phone-pad";
+      default:
+        return "default";
+    }
+  })();
 
   return (
     <View className={`w-full space-y-1 bg-gray p-4 rounded-2xl ${otherStyles}`}>
@@ -43,7 +58,7 @@ const FormField: React.FC<FormFieldProps> = ({
           onChangeText={handleChangeText}
           placeholderTextColor="#ccc"
           secureTextEntry={isPasswordField && !showPassword}
-          keyboardType={isNumeric ? "numeric" : "default"}
+          keyboardType={keyboardType}
           {...props}
         />
 

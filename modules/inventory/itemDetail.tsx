@@ -205,18 +205,19 @@ const ItemDetail = () => {
                 </Text>
               </View>
 
-              {data?.product?.attributes?.length > 0 && (
-                <View className="mt-4">
-                  <Text className="text-xl font-pmedium text-white mb-2">
-                    Attributes
-                  </Text>
-                  {data.product.attributes.map((attr, idx) => (
-                    <Text key={idx} className="text-base text-lightgray">
-                      {attr.name}: {attr.value}
+              {data?.product?.attributes &&
+                data?.product?.attributes?.length > 0 && (
+                  <View className="mt-4">
+                    <Text className="text-xl font-pmedium text-white mb-2">
+                      Attributes
                     </Text>
-                  ))}
-                </View>
-              )}
+                    {data.product.attributes?.map((attr, idx) => (
+                      <Text key={idx} className="text-base text-lightgray">
+                        {attr.key}: {attr.value}
+                      </Text>
+                    ))}
+                  </View>
+                )}
             </>
           )}
 
