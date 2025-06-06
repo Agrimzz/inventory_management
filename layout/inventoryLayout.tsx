@@ -28,7 +28,9 @@ const InventoryLayout = () => {
       <View className="flex flex-col gap-8 w-full">
         {/* Header */}
         <View className="w-full flex flex-row items-center justify-between p-4">
-          <Image source={images.logo1} className="w-14 h-14 rounded-full" />
+          <Pressable onPress={() => router.push("/dashboard")}>
+            <Image source={images.logo1} className="w-14 h-14 rounded-full" />
+          </Pressable>
           <Text className="text-sm font-plight text-white">Inventory</Text>
           <View className="flex items-center justify-center bg-gray rounded-2xl w-14 h-14">
             <Ellipsis size={16} color="#F1F1F1" />

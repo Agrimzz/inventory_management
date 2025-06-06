@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import {
   ArrowLeft,
   ArrowRight,
@@ -8,10 +9,38 @@ import {
   Truck,
   Warehouse,
 } from "lucide-react-native";
-import React from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import React, { useRef, useState } from "react";
+import {
+  Pressable,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 
 const Inventory = () => {
+  const { width } = useWindowDimensions();
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const scrollRef = useRef<ScrollView>(null);
+
+  const CARD_SPACING = 8;
+  const CARD_WIDTH = width / 2 - CARD_SPACING * 2.5;
+
+  const scrollToIndex = (index: number) => {
+    const clampedIndex = Math.max(0, Math.min(index, data.length - 1));
+    const offset = clampedIndex * (CARD_WIDTH + CARD_SPACING);
+    scrollRef.current?.scrollTo({ x: offset, animated: true });
+    setCurrentIndex(clampedIndex);
+  };
+
+  const data = [
+    { title: "items", num: 1300 },
+    { title: "warehouses", num: 4 },
+    { title: "suppliers", num: 24 },
+    { title: "locations", num: 10 },
+    { title: "dispatches", num: 55 },
+  ];
+
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
       <View style={{ marginTop: 48 }}>
@@ -80,71 +109,73 @@ const Inventory = () => {
             </Text>
 
             <View className="flex flex-row gap-2 items-center">
-              <ArrowLeft size={16} color="#F1F1F1" />
-              <ArrowRight size={16} color="#F1F1F1" />
+              <Pressable
+                onPress={() => scrollToIndex(currentIndex - 1)}
+                disabled={currentIndex === 0}
+                className="disabled:opacity-20"
+              >
+                <ArrowLeft size={16} color="#F1F1F1" />
+              </Pressable>
+              <Pressable
+                onPress={() => scrollToIndex(currentIndex + 1)}
+                disabled={currentIndex === data.length - 2}
+                className="disabled:opacity-20"
+              >
+                <ArrowRight size={16} color="#F1F1F1" />
+              </Pressable>
             </View>
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <Pressable className="bg-primary w-48 p-4 flex flex-col gap-8 rounded-2xl mr-2">
-              <View className="flex flex-row justify-between items-start">
+
+          {/* Scrollable Cards */}
+          <ScrollView
+            ref={scrollRef}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            decelerationRate="fast"
+            snapToInterval={CARD_WIDTH + CARD_SPACING}
+            snapToAlignment="start"
+            contentContainerStyle={{ gap: CARD_SPACING }}
+            onMomentumScrollEnd={(e) => {
+              const offsetX = e.nativeEvent.contentOffset.x;
+              const index = Math.round(offsetX / (CARD_WIDTH + CARD_SPACING));
+              setCurrentIndex(index);
+            }}
+          >
+            {data.map((item, index) => (
+              <Pressable
+                key={index}
+                style={{
+                  width: CARD_WIDTH,
+                }}
+                className={`${
+                  item.title === "items" ? "bg-primary" : "bg-white/10"
+                } p-4 flex flex-col gap-8 rounded-2xl`}
+                onPress={() =>
+                  router.push(("/inventory/" + item.title.toLowerCase()) as any)
+                }
+              >
+                <View className="flex flex-row justify-between items-start">
+                  <View className="flex-col">
+                    <Text className="text-base font-pmedium text-white">
+                      View
+                    </Text>
+                    <Text className="text-base font-pmedium text-white capitalize">
+                      {item.title}
+                    </Text>
+                  </View>
+                  <MoveUpRight size={20} color="#F1F1F1" />
+                </View>
+
                 <View className="flex-col">
-                  <Text className="text-base font-pmedium text-white">
-                    View
+                  <Text className="text-4xl font-pmedium text-white">
+                    {item.num}
                   </Text>
-                  <Text className="text-base font-pmedium text-white">
-                    Items
+                  <Text className="text-sm font-pmedium text-white/80 capitalize">
+                    {item.title}
                   </Text>
                 </View>
-                <MoveUpRight size={20} color="#F1F1F1" />
-              </View>
-
-              <View className="flex-col">
-                <Text className="text-4xl font-pmedium text-white">1300</Text>
-                <Text className="text-sm font-pmedium text-white/80">
-                  Items
-                </Text>
-              </View>
-            </Pressable>
-            <Pressable className="bg-white/10 w-48 p-4 flex flex-col gap-8 rounded-2xl mr-2">
-              <View className="flex flex-row justify-between items-start">
-                <View className="flex-col">
-                  <Text className="text-base font-pmedium text-white">
-                    View
-                  </Text>
-                  <Text className="text-base font-pmedium text-white">
-                    Items
-                  </Text>
-                </View>
-                <MoveUpRight size={20} color="#F1F1F1" />
-              </View>
-
-              <View className="flex-col">
-                <Text className="text-4xl font-pmedium text-white">1300</Text>
-                <Text className="text-sm font-pmedium text-white/80">
-                  Items
-                </Text>
-              </View>
-            </Pressable>
-            <Pressable className="bg-white/10 w-48 p-4 flex flex-col gap-8 rounded-2xl mr-2">
-              <View className="flex flex-row justify-between items-start">
-                <View className="flex-col">
-                  <Text className="text-base font-pmedium text-white">
-                    View
-                  </Text>
-                  <Text className="text-base font-pmedium text-white">
-                    Items
-                  </Text>
-                </View>
-                <MoveUpRight size={20} color="#F1F1F1" />
-              </View>
-
-              <View className="flex-col">
-                <Text className="text-4xl font-pmedium text-white">1300</Text>
-                <Text className="text-sm font-pmedium text-white/80">
-                  Items
-                </Text>
-              </View>
-            </Pressable>
+              </Pressable>
+            ))}
           </ScrollView>
         </View>
       </View>
